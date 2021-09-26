@@ -1,5 +1,5 @@
 defmodule Chess do
-  def is_valid_type(type) do
+  defp is_valid_type(type) do
     Enum.find([
         :queen_tower,
         :queen_tower_pawn,
@@ -20,11 +20,11 @@ defmodule Chess do
     ],& &1 == type)
   end
 
-  def is_valid_color(color) do
+  defp is_valid_color(color) do
     Enum.find([:white, :black],& &1 == color)
   end
 
-  def get_piece(type, color) do
+  defp get_piece(type, color) do
     case is_valid_color(color) do
       nil ->
         :invalid_color
@@ -42,132 +42,48 @@ defmodule Chess do
     end
   end
 
-  defp original_position(color,type) when {color,type} == {:white,:queen_tower} do
-    'a1'
-  end
+  defp original_position(color,type) do
 
-  defp original_position(color,type) when {color,type} == {:white,:queen_tower_pawn} do
-    'a2'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:queen_knight} do
-    'b1'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:queen_knight_pawn} do
-    'b2'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:queen_bishop} do
-    'c1'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:queen_bishop_pawn} do
-    'c2'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:queen} do
-    'd1'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:queen_pawn} do
-    'd2'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:king} do
-    'e1'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:king_pawn} do
-    'e2'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:king_bishop} do
-    'f1'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:king_bishop_pawn} do
-    'f2'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:king_knight} do
-    'g1'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:king_knight_pawn} do
-    'g2'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:king_tower} do
-    'h1'
-  end
-
-  defp original_position(color,type) when {color,type} == {:white,:king_tower_pawn} do
-    'h2'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:queen_tower} do
-    'a8'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:queen_tower_pawn} do
-    'a7'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:queen_knight} do
-    'b8'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:queen_knight_pawn} do
-    'b7'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:queen_bishop} do
-    'c8'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:queen_bishop_pawn} do
-    'c7'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:queen} do
-    'd8'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:queen_pawn} do
-    'd7'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:king} do
-    'e8'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:king_pawn} do
-    'e7'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:king_bishop} do
-    'f8'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:king_bishop_pawn} do
-    'f7'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:king_knight} do
-    'g8'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:king_knight_pawn} do
-    'g7'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:king_tower} do
-    'h8'
-  end
-
-  defp original_position(color,type) when {color,type} == {:black,:king_tower_pawn} do
-    'h7'
+    case color do
+      :white ->
+        case type do
+          :queen_tower -> 'a1'
+          :queen_tower_pawn-> 'a2'
+          :queen_knight -> 'b1'
+          :queen_knight_pawn -> 'b2'
+          :queen_bishop -> 'c1'
+          :queen_bishop_pawn -> 'c2'
+          :queen -> 'd1'
+          :queen_pawn -> 'd2'
+          :king -> 'e1'
+          :king_pawn -> 'e2'
+          :king_bishop -> 'f1'
+          :king_bishop_pawn -> 'f2'
+          :king_knight -> 'g1'
+          :king_knight_pawn -> 'g2'
+          :king_tower -> 'h1'
+          :king_tower_pawn -> 'h2'
+        end
+      :black ->
+        case type do
+          :queen_tower -> 'a8'
+          :queen_tower_pawn -> 'a7'
+          :queen_knight -> 'b8'
+          :queen_knight_pawn -> 'b7'
+          :queen_bishop -> 'c8'
+          :queen_bishop_pawn -> 'c7'
+          :queen -> 'd8'
+          :queen_pawn -> 'd7'
+          :king -> 'e8'
+          :king_pawn -> 'e7'
+          :king_bishop -> 'f8'
+          :king_bishop_pawn -> 'f7'
+          :king_knight -> 'g8'
+          :king_knight_pawn -> 'g7'
+          :king_tower -> 'h8'
+          :king_tower_pawn -> 'h7'
+        end
+    end
   end
 
   def get_king(color) do
