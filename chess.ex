@@ -1,10 +1,45 @@
 defmodule Chess do
-  defp get_piece(type, color) do
-    %{
-      type: type,
-      color: color,
-      position: original_position(color,type)
-    }
+  def is_valid_type(type) do
+    Enum.find([
+        :queen_tower,
+        :queen_tower_pawn,
+        :queen_knight,
+        :queen_knight_pawn,
+        :queen_bishop,
+        :queen_bishop_pawn,
+        :queen,
+        :queen_pawn,
+        :king,
+        :king_pawn,
+        :king_bishop,
+        :king_bishop_pawn,
+        :king_knight,
+        :king_knight_pawn,
+        :king_tower,
+        :king_tower_pawn
+    ],& &1 == type)
+  end
+
+  def is_valid_color(color) do
+    Enum.find([:white, :black],& &1 == color)
+  end
+
+  def get_piece(type, color) do
+    case is_valid_color(color) do
+      nil ->
+        :invalid_color
+      _ ->
+        case is_valid_type(type) do
+          nil ->
+            :invalid_type
+          _ ->
+            %{
+              type: type,
+              color: color,
+              position: original_position(color,type)
+            }
+        end
+    end
   end
 
   defp original_position(color,type) when {color,type} == {:white,:queen_tower} do
