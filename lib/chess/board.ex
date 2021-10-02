@@ -1,5 +1,5 @@
 defmodule Chess.Board do
-  defstruct piece_list: []
+  defstruct pieces: []
 
   alias Chess.Board
   alias Chess.Piece
@@ -11,11 +11,11 @@ defmodule Chess.Board do
   alias Chess.King
 
   def new do
-    %Board{piece_list: (for color <- Piece.color_list, type <- Piece.type_list, do: Piece.new(type,color))}
+    %Board{pieces: (for color <- Piece.color_list, type <- Piece.type_list, do: Piece.new(type,color))}
   end
 
   def get_piece(%Board{} = board,position) do
-    Enum.find(board,& &1.position == position)
+    Enum.find(board.pieces,& &1.position == position)
   end
 
   # def insert_piece(%Board{} = board,type,color) do
@@ -80,14 +80,18 @@ defmodule Chess.Board do
   def possible_positions(%Board{} = board,position) do
     piece = get_piece(board,position)
 
-    case piece.class do
-      :pawn -> Pawn.possible_positions(board,position,piece)
-      :rook -> Rook.possible_positions(board,position,piece)
-      :knight -> Knight.possible_positions(board,position,piece)
-      :bishop -> Bishop.possible_positions(board,position,piece)
-      :queen -> Queen.possible_positions(board,position,piece)
-      :king -> King.possible_positions(board,position,piece)
-      _ -> []
+    if piece == nil do
+      []
+    else
+      case piece.class do
+        :pawn -> Pawn.possible_positions(board,position,piece)
+        :rook -> Rook.possible_positions(board,position,piece)
+        :knight -> Knight.possible_positions(board,position,piece)
+        :bishop -> Bishop.possible_positions(board,position,piece)
+        :queen -> Queen.possible_positions(board,position,piece)
+        :king -> King.possible_positions(board,position,piece)
+        _ -> []
+      end
     end
   end
 
@@ -139,8 +143,8 @@ defmodule Chess.Board do
         {:not_allowed,board}
       else
         piece_to_del = get_piece(board,to)
-        board = List.delete(board,piece_to_del)
-        {:ok,Enum.map(board, fn x -> if x.position == from, do: %{piece | position: to, moved: true}, else: x end)}
+        board = %Board{board | pieces: List.delete(board.pieces,piece_to_del)}
+        {:ok,%Board{board | pieces: Enum.map(board.pieces, fn x -> if x.position == from, do: %{piece | position: to, moved: true}, else: x end)}}
       end
     end
   end
@@ -169,5 +173,6 @@ defmodule Chess.Board do
       IO.puts(print_line(board,y,marks))
     end
     IO.puts("\n  A B C D E F G H ")
+    IO.puts("#{marks}")
   end
 end
