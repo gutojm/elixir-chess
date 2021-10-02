@@ -1,2 +1,0 @@
-defmodule Chess do
-end

@@ -1,4 +1,12 @@
-defmodule Piece do
+defmodule Chess.Piece do
+  defstruct type: nil,
+            color: nil,
+            position: nil,
+            class: nil,
+            moved: false
+
+  alias Chess.Piece
+
   @class_list [
     :queen,
     :king,
@@ -46,6 +54,7 @@ defmodule Piece do
 
   def is_valid_type?(type), do: type in @type_list
   def is_valid_color?(color), do: color in @color_list
+  def is_valid_class?(class), do: class in @class_list
 
   defp get_class(type) when type not in @type_list, do: :invalid_type
   defp get_class(:queen_rook),   do: :rook
@@ -93,10 +102,10 @@ defmodule Piece do
   defp original_position(:black,:king_rook),        do: "h8"
   defp original_position(:black,:king_rook_pawn),   do: "h7"
 
-  def get_piece(type, _color) when type not in @type_list, do: :invalid_type
-  def get_piece(_type, color) when color not in @color_list, do: :invalid_color
-  def get_piece(type, color) do
-    %{
+  def new(type, _color) when type not in @type_list, do: :invalid_type
+  def new(_type, color) when color not in @color_list, do: :invalid_color
+  def new(type, color) do
+    %Piece{
       type: type,
       color: color,
       position: original_position(color,type),
@@ -105,67 +114,67 @@ defmodule Piece do
     }
   end
 
-  def get_king(color) do
-    get_piece(:king,color)
-  end
+  # def get_king(color) do
+  #   get_piece(:king,color)
+  # end
 
-  def get_queen(color) do
-    get_piece(:queen,color)
-  end
+  # def get_queen(color) do
+  #   get_piece(:queen,color)
+  # end
 
-  def get_king_bishop(color) do
-    get_piece(:king_bishop,color)
-  end
+  # def get_king_bishop(color) do
+  #   get_piece(:king_bishop,color)
+  # end
 
-  def get_queen_bishop(color) do
-    get_piece(:queen_bishop,color)
-  end
+  # def get_queen_bishop(color) do
+  #   get_piece(:queen_bishop,color)
+  # end
 
-  def get_king_knight(color) do
-    get_piece(:king_knight,color)
-  end
+  # def get_king_knight(color) do
+  #   get_piece(:king_knight,color)
+  # end
 
-  def get_queen_knight(color) do
-    get_piece(:queen_knight,color)
-  end
+  # def get_queen_knight(color) do
+  #   get_piece(:queen_knight,color)
+  # end
 
-  def get_king_rook(color) do
-    get_piece(:king_rook,color)
-  end
+  # def get_king_rook(color) do
+  #   get_piece(:king_rook,color)
+  # end
 
-  def get_queen_rook(color) do
-    get_piece(:queen_rook,color)
-  end
+  # def get_queen_rook(color) do
+  #   get_piece(:queen_rook,color)
+  # end
 
-  def get_king_pawn(color) do
-    get_piece(:king_pawn,color)
-  end
+  # def get_king_pawn(color) do
+  #   get_piece(:king_pawn,color)
+  # end
 
-  def get_queen_pawn(color) do
-    get_piece(:queen_pawn,color)
-  end
+  # def get_queen_pawn(color) do
+  #   get_piece(:queen_pawn,color)
+  # end
 
-  def get_king_bishop_pawn(color) do
-    get_piece(:king_bishop_pawn,color)
-  end
+  # def get_king_bishop_pawn(color) do
+  #   get_piece(:king_bishop_pawn,color)
+  # end
 
-  def get_queen_bishop_pawn(color) do
-    get_piece(:queen_bishop_pawn,color)
-  end
+  # def get_queen_bishop_pawn(color) do
+  #   get_piece(:queen_bishop_pawn,color)
+  # end
 
-  def get_king_knight_pawn(color) do
-    get_piece(:king_knight_pawn,color)
-  end
+  # def get_king_knight_pawn(color) do
+  #   get_piece(:king_knight_pawn,color)
+  # end
 
-  def get_queen_knight_pawn(color) do
-    get_piece(:queen_knight_pawn,color)
-  end
+  # def get_queen_knight_pawn(color) do
+  #   get_piece(:queen_knight_pawn,color)
+  # end
 
-  def get_king_rook_pawn(color) do
-    get_piece(:king_rook_pawn,color)
-  end
+  # def get_king_rook_pawn(color) do
+  #   get_piece(:king_rook_pawn,color)
+  # end
 
-  def get_queen_rook_pawn(color) do
-    get_piece(:queen_rook_pawn,color)
-  end
+  # def get_queen_rook_pawn(color) do
+  #   get_piece(:queen_rook_pawn,color)
+  # end
 end

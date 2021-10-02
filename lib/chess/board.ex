@@ -1,25 +1,36 @@
-defmodule Board do
+defmodule Chess.Board do
+  defstruct piece_list: []
 
-  def setup_board do
-    for color <- Piece.color_list, type <- Piece.type_list, do: Piece.get_piece(type,color)
+  alias Chess.Board
+  alias Chess.Piece
+  alias Chess.Pawn
+  alias Chess.Rook
+  alias Chess.Knight
+  alias Chess.Bishop
+  alias Chess.Queen
+  alias Chess.King
+
+  def new do
+    %Board{piece_list: (for color <- Piece.color_list, type <- Piece.type_list, do: Piece.new(type,color))}
   end
 
-  def get_piece(board,position) do
+  def get_piece(%Board{} = board,position) do
     Enum.find(board,& &1.position == position)
   end
 
-  def insert_piece(board,type,color) do
-    piece = get_piece(type,color)
-    case piece do
-      :invalid_type -> {:invalid_type,board}
-      :invalid_color -> {:invalid_color,board}
-      _ ->
-        case Enum.find(board,& &1.type == type && &1.color == color) do
-          nil -> {:ok,[piece|board]}
-          _ -> {:already_in,board}
-        end
-    end
-  end
+  # def insert_piece(%Board{} = board,type,color) do
+  #   piece = get_piece(type,color)
+  #   case piece do
+  #     :invalid_type -> {:invalid_type,board}
+  #     :invalid_color -> {:invalid_color,board}
+  #     _ ->
+  #       case Enum.find(board,& &1.type == type && &1.color == color) do
+  #         nil -> {:ok,[piece|board]}
+  #         _ -> {:already_in,board}
+  #       end
+  #   end
+  # end
+
 
   def delta_available(position) do
     {x,y} = position_2_xy(position)
@@ -66,7 +77,7 @@ defmodule Board do
   def new_position(position,:white,deltax,deltay), do: new_position(position,deltax,deltay)
   def new_position(position,:black,deltax,deltay), do: new_position(position,-deltax,-deltay)
 
-  def possible_positions(board,position) do
+  def possible_positions(%Board{} = board,position) do
     piece = get_piece(board,position)
 
     case piece.class do
@@ -80,24 +91,24 @@ defmodule Board do
     end
   end
 
-  def possible_positions(direction,board,position,piece,max_iter,list,iter) do
+  def possible_positions(direction,%Board{} = board,position,%Piece{} = piece,max_iter,list,iter) do
     iter = iter + 1
 
     {status,p} = case direction do
-      :up -> Board.new_position(position,piece.color,0,1)
-      :down -> Board.new_position(position,piece.color,0,-1)
-      :right -> Board.new_position(position,piece.color,1,0)
-      :left -> Board.new_position(position,piece.color,-1,0)
-      :up_right -> Board.new_position(position,piece.color,1,1)
-      :up_left -> Board.new_position(position,piece.color,-1,1)
-      :down_right -> Board.new_position(position,piece.color,1,-1)
-      _ -> Board.new_position(position,piece.color,-1,-1)
+      :up -> new_position(position,piece.color,0,1)
+      :down -> new_position(position,piece.color,0,-1)
+      :right -> new_position(position,piece.color,1,0)
+      :left -> new_position(position,piece.color,-1,0)
+      :up_right -> new_position(position,piece.color,1,1)
+      :up_left -> new_position(position,piece.color,-1,1)
+      :down_right -> new_position(position,piece.color,1,-1)
+      _ -> new_position(position,piece.color,-1,-1)
     end
 
     if status == :invalid_position do
       list
     else
-      piece_p = Board.get_piece(board,p)
+      piece_p = get_piece(board,p)
 
       if piece_p == nil do
         list = [p|list]
@@ -116,7 +127,7 @@ defmodule Board do
     end
   end
 
-  def move(board,from,to) do
+  def move(%Board{} = board,from,to) do
     piece = get_piece(board,from)
 
     if(piece == nil) do
@@ -134,11 +145,11 @@ defmodule Board do
     end
   end
 
-  defp print_line(board,y,marks) do
+  defp print_line(%Board{} = board,y,marks) do
     linha =
       for x <- 0..7 do
-        position = Board.xy_2_position({x,y})
-        piece = Board.get_piece(board,position)
+        position = xy_2_position({x,y})
+        piece = get_piece(board,position)
 
         if position in marks do
           if piece == nil, do: "<>", else: "><"
@@ -151,13 +162,12 @@ defmodule Board do
     "#{y+1} #{linha}"
   end
 
-  def print(board,pos_highlight \\ "") do
-    marks = if pos_highlight == "", do: [], else: Board.possible_positions(board,pos_highlight)
+  def print(%Board{} = board,pos_highlight \\ "") do
+    marks = if pos_highlight == "", do: [], else: possible_positions(board,pos_highlight)
 
     for y <- 7..0 do
       IO.puts(print_line(board,y,marks))
     end
     IO.puts("\n  A B C D E F G H ")
   end
-
 end
