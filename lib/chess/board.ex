@@ -1,5 +1,8 @@
 defmodule Chess.Board do
-  defstruct pieces: []
+  defstruct pieces: [],
+            moves: [],
+            white_captured: [],
+            black_captured: []
 
   alias Chess.Board
   alias Chess.Piece
@@ -57,6 +60,12 @@ defmodule Chess.Board do
     <<minx+x::utf8,miny+y::utf8>>
   end
 
+  def absolute_deltas(p1,p2) do
+    {x1,y1} = position_2_xy(p1)
+    {x2,y2} = position_2_xy(p2)
+    {abs(x1-x2),abs(y1-y2)}
+  end
+
   def new_position(position,deltax,deltay) do
     {axf,axb,ayf,ayb} = delta_available(position)
 
@@ -71,6 +80,39 @@ defmodule Chess.Board do
         x = x + deltax
         y = y + deltay
         {:ok,<<x::utf8,y::utf8>>}
+    end
+  end
+
+  def en_passant_kill_position(%Board{} = board,%Piece{} = killer_piece,to) do
+    piece = get_piece(board,to)
+
+    if piece != nil or killer_piece.class != :pawn do
+      nil
+    else
+      {status,position} = new_position(to,killer_piece.color,0,-1)
+
+      if status != :ok do
+        nil
+      else
+        enemy_piece = get_piece(board,position)
+
+        if enemy_piece != nil
+          and enemy_piece.class == :pawn
+          and enemy_piece.color != killer_piece.color
+          and Enum.count(enemy_piece.moves) == 1 do
+
+          [{from,to}|_tail] = enemy_piece.moves
+          {_xdelta,ydelta} = absolute_deltas(from,to)
+
+          if ydelta == 2 do
+            position
+          else
+            nil
+          end
+        else
+          nil
+        end
+      end
     end
   end
 
@@ -95,7 +137,7 @@ defmodule Chess.Board do
     end
   end
 
-  def possible_positions(direction,%Board{} = board,position,%Piece{} = piece,max_iter,list,iter) do
+  def possible_positions(direction,%Board{} = board,position,%Piece{} = piece,max_iter,list,iter,kill \\ :allowed) do
     iter = iter + 1
 
     {status,p} = case direction do
@@ -114,21 +156,137 @@ defmodule Chess.Board do
     else
       piece_p = get_piece(board,p)
 
-      if piece_p == nil do
+      if piece_p == nil and kill != :mandatory do
         list = [p|list]
         if iter == max_iter do
           list
         else
-          possible_positions(direction,board,p,piece,max_iter,list,iter)
+          possible_positions(direction,board,p,piece,max_iter,list,iter,kill)
         end
       else
-        if piece_p.color == piece.color do
+        if piece_p == nil or piece_p.color == piece.color or kill == :forbidden do
           list
         else
           [p|list]
         end
       end
     end
+  end
+
+  def castling_positions(%Board{} = board,position,%Piece{} = piece) do
+    if piece.moved do
+      []
+    else
+      rooks = [Piece.original_position(piece.color,:queen_rook),Piece.original_position(piece.color,:king_rook)]
+      in_between = [
+        [
+          Piece.original_position(piece.color,:queen_knight),
+          Piece.original_position(piece.color,:queen_bishop),
+          Piece.original_position(piece.color,:queen)
+        ],
+        [
+          Piece.original_position(piece.color,:king_knight),
+          Piece.original_position(piece.color,:king_bishop)
+        ]
+      ]
+
+      for x <- 0..1 do
+        rook_position = Enum.at(rooks,x)
+        rook = Board.get_piece(board,rook_position)
+        if rook == nil or rook.moved do
+          nil
+        else
+          positions = Enum.at(in_between,x)
+
+          list =
+            for p <- positions do
+              Board.get_piece(board,p)
+            end
+            |> Enum.filter(& &1 != nil)
+
+          if list == [] do
+            delta_x = if x == 0, do: -2, else: 2
+
+            {status,new_p} = Board.new_position(position,delta_x,0)
+
+            if status == :ok do
+              new_p
+            else
+              nil
+            end
+          else
+            nil
+          end
+        end
+      end
+      |> Enum.filter(& &1 != nil)
+    end
+  end
+
+  defp add_captured(%Board{} = board,%Piece{color: :white} = piece) do
+    %Board{board | white_captured: [piece|board.white_captured]}
+  end
+
+  defp add_captured(%Board{} = board,%Piece{color: :black} = piece) do
+    %Board{board | black_captured: [piece|board.black_captured]}
+  end
+
+  defp add_captured(%Board{} = board,nil) do
+    board
+  end
+
+  defp kill(%Board{} = board,%Piece{} = piece) do
+    board = add_captured(board,piece)
+    %Board{board | pieces: List.delete(board.pieces,piece)}
+  end
+
+  defp maybe_kill(%Board{} = board,%Piece{} = killer_piece,position) do
+    piece = get_piece(board,position)
+
+    if piece == nil do
+      en_passant = en_passant_kill_position(board,killer_piece,position)
+
+      if en_passant == nil do
+        board
+      else
+        kill(board,get_piece(board,en_passant))
+      end
+    else
+      kill(board,piece)
+    end
+  end
+
+  defp maybe_castling_rook(%Board{} = board,%Piece{} = piece,position) do
+    if piece.class == :king do
+      cpositions = castling_positions(board,piece.position,piece)
+
+      if position in cpositions do
+        {rook,new_p} =
+          case position do
+            "c1" -> {get_piece(board,"a1"),"d1"}
+            "g1" -> {get_piece(board,"h1"),"f1"}
+            "c8" -> {get_piece(board,"a8"),"d8"}
+            "g8" -> {get_piece(board,"h8"),"f8"}
+            _ -> {nil,nil}
+          end
+
+        if rook == nil do
+          board
+        else
+          set_new_position(board,rook,new_p)
+        end
+      end
+    else
+      board
+    end
+  end
+
+  defp set_new_position(%Board{} = board,%Piece{} = piece,position) do
+    %Board{board | pieces: Enum.map(board.pieces, fn x -> if x.position == piece.position, do: Piece.set_position(piece,position), else: x end)}
+  end
+
+  defp add_move(%Board{} = board,type,from,to) do
+    %Board{board | moves: [{type,from,to}|board.moves]}
   end
 
   def move(%Board{} = board,from,to) do
@@ -142,9 +300,13 @@ defmodule Chess.Board do
       if to not in pp do
         {:not_allowed,board}
       else
-        piece_to_del = get_piece(board,to)
-        board = %Board{board | pieces: List.delete(board.pieces,piece_to_del)}
-        {:ok,%Board{board | pieces: Enum.map(board.pieces, fn x -> if x.position == from, do: %{piece | position: to, moved: true}, else: x end)}}
+        board =
+          add_move(board,piece.type,from,to)
+          |> maybe_kill(piece,to)
+          |> maybe_castling_rook(piece,to)
+          |> set_new_position(piece,to)
+
+        {:ok,board}
       end
     end
   end
@@ -156,23 +318,42 @@ defmodule Chess.Board do
         piece = get_piece(board,position)
 
         if position in marks do
-          if piece == nil, do: "<>", else: "><"
+          if piece == nil, do: "< >", else: "> <"
         else
-          if piece == nil, do: "  ", else: Piece.get_color(piece.color) <> Piece.get_name(piece.class)
+          if piece == nil, do: "[ ]", else: Piece.get_color(piece.color) <> Piece.get_name(piece.class) <> Piece.get_color(piece.color)
         end
       end
       |> Enum.join()
 
-    "#{y+1} #{linha}"
+    "#{y+1} #{linha} #{y+1}"
   end
 
   def print(%Board{} = board,pos_highlight \\ "") do
     marks = if pos_highlight == "", do: [], else: possible_positions(board,pos_highlight)
 
+    IO.puts("   A  B  C  D  E  F  G  H \n")
     for y <- 7..0 do
       IO.puts(print_line(board,y,marks))
     end
-    IO.puts("\n  A B C D E F G H ")
+    IO.puts("\n   A  B  C  D  E  F  G  H ")
     IO.puts("#{marks}")
+  end
+
+  def print_moves(%Board{} = board) do
+    for {type,from,to} <- board.moves do
+      IO.puts("#{type} #{from} #{to}")
+    end
+  end
+
+  def print_captures(%Board{} = board) do
+    IO.puts("black:")
+    for x <- board.white_captured do
+      IO.puts("#{x.type} #{x.color}")
+    end
+
+    IO.puts("white:")
+    for x <- board.black_captured do
+      IO.puts("#{x.type} #{x.color}")
+    end
   end
 end

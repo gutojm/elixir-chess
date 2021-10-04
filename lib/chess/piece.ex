@@ -3,7 +3,8 @@ defmodule Chess.Piece do
             color: nil,
             position: nil,
             class: nil,
-            moved: false
+            moved: false,
+            moves: []
 
   alias Chess.Piece
 
@@ -48,8 +49,8 @@ defmodule Chess.Piece do
   def get_name(:pawn), do: "P"
   def get_name(_), do: " "
 
-  def get_color(:white), do: "w"
-  def get_color(:black), do: "b"
+  def get_color(:white), do: "_"
+  def get_color(:black), do: " "
   def get_color(_), do: " "
 
   def is_valid_type?(type), do: type in @type_list
@@ -67,40 +68,40 @@ defmodule Chess.Piece do
   defp get_class(:king),         do: :king
   defp get_class(_),             do: :pawn
 
-  defp original_position(color,_type) when color not in @color_list, do: :invalid_color
-  defp original_position(_color,type) when type not in @type_list, do: :invalid_type
-  defp original_position(:white,:queen_rook),       do: "a1"
-  defp original_position(:white,:queen_rook_pawn),  do: "a2"
-  defp original_position(:white,:queen_knight),      do: "b1"
-  defp original_position(:white,:queen_knight_pawn), do: "b2"
-  defp original_position(:white,:queen_bishop),      do: "c1"
-  defp original_position(:white,:queen_bishop_pawn), do: "c2"
-  defp original_position(:white,:queen),             do: "d1"
-  defp original_position(:white,:queen_pawn),        do: "d2"
-  defp original_position(:white,:king),              do: "e1"
-  defp original_position(:white,:king_pawn),         do: "e2"
-  defp original_position(:white,:king_bishop),       do: "f1"
-  defp original_position(:white,:king_bishop_pawn),  do: "f2"
-  defp original_position(:white,:king_knight),       do: "g1"
-  defp original_position(:white,:king_knight_pawn),  do: "g2"
-  defp original_position(:white,:king_rook),        do: "h1"
-  defp original_position(:white,:king_rook_pawn),   do: "h2"
-  defp original_position(:black,:queen_rook),       do: "a8"
-  defp original_position(:black,:queen_rook_pawn),  do: "a7"
-  defp original_position(:black,:queen_knight),      do: "b8"
-  defp original_position(:black,:queen_knight_pawn), do: "b7"
-  defp original_position(:black,:queen_bishop),      do: "c8"
-  defp original_position(:black,:queen_bishop_pawn), do: "c7"
-  defp original_position(:black,:queen),             do: "d8"
-  defp original_position(:black,:queen_pawn),        do: "d7"
-  defp original_position(:black,:king),              do: "e8"
-  defp original_position(:black,:king_pawn),         do: "e7"
-  defp original_position(:black,:king_bishop),       do: "f8"
-  defp original_position(:black,:king_bishop_pawn),  do: "f7"
-  defp original_position(:black,:king_knight),       do: "g8"
-  defp original_position(:black,:king_knight_pawn),  do: "g7"
-  defp original_position(:black,:king_rook),        do: "h8"
-  defp original_position(:black,:king_rook_pawn),   do: "h7"
+  def original_position(color,_type) when color not in @color_list, do: :invalid_color
+  def original_position(_color,type) when type not in @type_list, do: :invalid_type
+  def original_position(:white,:queen_rook),       do: "a1"
+  def original_position(:white,:queen_rook_pawn),  do: "a2"
+  def original_position(:white,:queen_knight),      do: "b1"
+  def original_position(:white,:queen_knight_pawn), do: "b2"
+  def original_position(:white,:queen_bishop),      do: "c1"
+  def original_position(:white,:queen_bishop_pawn), do: "c2"
+  def original_position(:white,:queen),             do: "d1"
+  def original_position(:white,:queen_pawn),        do: "d2"
+  def original_position(:white,:king),              do: "e1"
+  def original_position(:white,:king_pawn),         do: "e2"
+  def original_position(:white,:king_bishop),       do: "f1"
+  def original_position(:white,:king_bishop_pawn),  do: "f2"
+  def original_position(:white,:king_knight),       do: "g1"
+  def original_position(:white,:king_knight_pawn),  do: "g2"
+  def original_position(:white,:king_rook),        do: "h1"
+  def original_position(:white,:king_rook_pawn),   do: "h2"
+  def original_position(:black,:queen_rook),       do: "a8"
+  def original_position(:black,:queen_rook_pawn),  do: "a7"
+  def original_position(:black,:queen_knight),      do: "b8"
+  def original_position(:black,:queen_knight_pawn), do: "b7"
+  def original_position(:black,:queen_bishop),      do: "c8"
+  def original_position(:black,:queen_bishop_pawn), do: "c7"
+  def original_position(:black,:queen),             do: "d8"
+  def original_position(:black,:queen_pawn),        do: "d7"
+  def original_position(:black,:king),              do: "e8"
+  def original_position(:black,:king_pawn),         do: "e7"
+  def original_position(:black,:king_bishop),       do: "f8"
+  def original_position(:black,:king_bishop_pawn),  do: "f7"
+  def original_position(:black,:king_knight),       do: "g8"
+  def original_position(:black,:king_knight_pawn),  do: "g7"
+  def original_position(:black,:king_rook),        do: "h8"
+  def original_position(:black,:king_rook_pawn),   do: "h7"
 
   def new(type, _color) when type not in @type_list, do: :invalid_type
   def new(_type, color) when color not in @color_list, do: :invalid_color
@@ -112,6 +113,18 @@ defmodule Chess.Piece do
       class: get_class(type),
       moved: false
     }
+  end
+
+  def set_position(%Piece{} = piece,position) do
+    %Piece{piece | position: position, moved: true, moves: [{piece.position,position}]}
+  end
+
+  def enemy_color(color) do
+    if color == :white do
+      :black
+    else
+      :white
+    end
   end
 
   # def get_king(color) do
