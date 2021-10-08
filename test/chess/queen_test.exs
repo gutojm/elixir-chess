@@ -23,26 +23,34 @@ defmodule Chess.QueenTest do
 
       assert [] =
                [
-                 "d3", # verticais
+                 # verticais
+                 "d3",
                  "d4",
                  "d6",
-                 "d7", # morte
-                 "a5", # horizontais
+                 # morte
+                 "d7",
+                 # horizontais
+                 "a5",
                  "b5",
                  "c5",
                  "e5",
                  "f5",
                  "h5",
-                 "e6", # diagonal ur
-                 "f7", # kill
-                 "c6", # diagonal ul
-                 "b7", # kill
-                 "e4", # diagonal dr
+                 # diagonal ur
+                 "e6",
+                 # kill
+                 "f7",
+                 # diagonal ul
+                 "c6",
+                 # kill
+                 "b7",
+                 # diagonal dr
+                 "e4",
                  "f3",
-                 "c4", # diagonal dl
+                 # diagonal dl
+                 "c4",
                  "b3"
                ] -- Queen.possible_positions(board, "d5", w_queen)
     end
   end
-
 end
