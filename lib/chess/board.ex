@@ -13,12 +13,18 @@ defmodule Chess.Board do
   alias Chess.Queen
   alias Chess.King
 
+  @doc """
+  Return a new Bord struct
+  """
   def new do
-    %Board{pieces: (for color <- Piece.color_list, type <- Piece.type_list, do: Piece.new(type,color))}
+    %Board{
+      pieces:
+        for(color <- Piece.color_list(), type <- Piece.type_list(), do: Piece.new(type, color))
+    }
   end
 
-  def get_piece(%Board{} = board,position) do
-    Enum.find(board.pieces,& &1.position == position)
+  def get_piece(%Board{} = board, position) do
+    Enum.find(board.pieces, &(&1.position == position))
   end
 
   # def insert_piece(%Board{} = board,type,color) do
@@ -34,75 +40,75 @@ defmodule Chess.Board do
   #   end
   # end
 
-
   def delta_available(position) do
-    {x,y} = position_2_xy(position)
-    axf = 7 - x;
-    axb = 0 - x;
-    ayf = 7 - y;
-    ayb = 0 - y;
-    {axf,axb,ayf,ayb}
+    {x, y} = position_2_xy(position)
+    axf = 7 - x
+    axb = 0 - x
+    ayf = 7 - y
+    ayb = 0 - y
+    {axf, axb, ayf, ayb}
   end
 
   defp minxy do
-    <<minx::utf8,miny::utf8>> = "a1"
-    {minx,miny}
+    <<minx::utf8, miny::utf8>> = "a1"
+    {minx, miny}
   end
 
   def position_2_xy(position) do
-    {minx,miny} = minxy()
-    <<x::utf8,y::utf8>> = position
-    {x-minx,y-miny}
+    {minx, miny} = minxy()
+    <<x::utf8, y::utf8>> = position
+    {x - minx, y - miny}
   end
 
-  def xy_2_position({x,y}) do
-    {minx,miny} = minxy()
-    <<minx+x::utf8,miny+y::utf8>>
+  def xy_2_position({x, y}) do
+    {minx, miny} = minxy()
+    <<minx + x::utf8, miny + y::utf8>>
   end
 
-  def absolute_deltas(p1,p2) do
-    {x1,y1} = position_2_xy(p1)
-    {x2,y2} = position_2_xy(p2)
-    {abs(x1-x2),abs(y1-y2)}
+  def absolute_deltas(p1, p2) do
+    {x1, y1} = position_2_xy(p1)
+    {x2, y2} = position_2_xy(p2)
+    {abs(x1 - x2), abs(y1 - y2)}
   end
 
-  def new_position(position,deltax,deltay) do
-    {axf,axb,ayf,ayb} = delta_available(position)
-
-    cond do
-      deltax < axb or
-      deltax > axf or
-      deltay < ayb or
-      deltay > ayf ->
-        {:invalid_position,position}
-      true ->
-        <<x::utf8,y::utf8>> = position
-        x = x + deltax
-        y = y + deltay
-        {:ok,<<x::utf8,y::utf8>>}
-    end
+  def new_position(position, deltax, deltay) do
+    position
+    |> delta_available()
+    |> build_new_position(position, deltax, deltay)
   end
 
-  def en_passant_kill_position(%Board{} = board,%Piece{} = killer_piece,to) do
-    piece = get_piece(board,to)
+  defp build_new_position({axf, axb, ayf, ayb}, position, deltax, deltay) when
+        (deltax < axb or deltax > axf or deltay < ayb or deltay > ayf) do
+    {:invalid_position, position}
+  end
+
+  defp build_new_position(_, position, deltax, deltay) do
+    <<x::utf8, y::utf8>> = position
+    x = x + deltax
+    y = y + deltay
+
+    {:ok, <<x::utf8, y::utf8>>}
+  end
+
+  def en_passant_kill_position(%Board{} = board, %Piece{} = killer_piece, to) do
+    piece = get_piece(board, to)
 
     if piece != nil or killer_piece.class != :pawn do
       nil
     else
-      {status,position} = new_position(to,killer_piece.color,0,-1)
+      {status, position} = new_position(to, killer_piece.color, 0, -1)
 
       if status != :ok do
         nil
       else
-        enemy_piece = get_piece(board,position)
+        enemy_piece = get_piece(board, position)
 
-        if enemy_piece != nil
-          and enemy_piece.class == :pawn
-          and enemy_piece.color != killer_piece.color
-          and Enum.count(enemy_piece.moves) == 1 do
-
-          [{from,to}|_tail] = enemy_piece.moves
-          {_xdelta,ydelta} = absolute_deltas(from,to)
+        if enemy_piece != nil and
+             enemy_piece.class == :pawn and
+             enemy_piece.color != killer_piece.color and
+             Enum.count(enemy_piece.moves) == 1 do
+          [{from, to} | _tail] = enemy_piece.moves
+          {_xdelta, ydelta} = absolute_deltas(from, to)
 
           if ydelta == 2 do
             position
@@ -116,98 +122,113 @@ defmodule Chess.Board do
     end
   end
 
-  def new_position(position,:white,deltax,deltay), do: new_position(position,deltax,deltay)
-  def new_position(position,:black,deltax,deltay), do: new_position(position,-deltax,-deltay)
+  def new_position(position, :white, deltax, deltay), do: new_position(position, deltax, deltay)
+  def new_position(position, :black, deltax, deltay), do: new_position(position, -deltax, -deltay)
 
-  def possible_positions(%Board{} = board,position) do
-    piece = get_piece(board,position)
+  def possible_positions(%Board{} = board, position) do
+    piece = get_piece(board, position)
 
     if piece == nil do
       []
     else
       case piece.class do
-        :pawn -> Pawn.possible_positions(board,position,piece)
-        :rook -> Rook.possible_positions(board,position,piece)
-        :knight -> Knight.possible_positions(board,position,piece)
-        :bishop -> Bishop.possible_positions(board,position,piece)
-        :queen -> Queen.possible_positions(board,position,piece)
-        :king -> King.possible_positions(board,position,piece)
+        :pawn -> Pawn.possible_positions(board, position, piece)
+        :rook -> Rook.possible_positions(board, position, piece)
+        :knight -> Knight.possible_positions(board, position, piece)
+        :bishop -> Bishop.possible_positions(board, position, piece)
+        :queen -> Queen.possible_positions(board, position, piece)
+        :king -> King.possible_positions(board, position, piece)
         _ -> []
       end
     end
   end
 
-  def possible_positions(direction,%Board{} = board,position,%Piece{} = piece,max_iter,list,iter,kill \\ :allowed) do
+  def possible_positions(
+        direction,
+        %Board{} = board,
+        position,
+        %Piece{} = piece,
+        max_iter,
+        list,
+        iter,
+        kill \\ :allowed
+      ) do
     iter = iter + 1
 
-    {status,p} = case direction do
-      :up -> new_position(position,piece.color,0,1)
-      :down -> new_position(position,piece.color,0,-1)
-      :right -> new_position(position,piece.color,1,0)
-      :left -> new_position(position,piece.color,-1,0)
-      :up_right -> new_position(position,piece.color,1,1)
-      :up_left -> new_position(position,piece.color,-1,1)
-      :down_right -> new_position(position,piece.color,1,-1)
-      _ -> new_position(position,piece.color,-1,-1)
-    end
+    {status, p} = get_position_by_direction(direction, position, piece.color)
 
     if status == :invalid_position do
       list
     else
-      piece_p = get_piece(board,p)
+      piece_p = get_piece(board, p)
 
       if piece_p == nil and kill != :mandatory do
-        list = [p|list]
+        list = [p | list]
+
         if iter == max_iter do
           list
         else
-          possible_positions(direction,board,p,piece,max_iter,list,iter,kill)
+          possible_positions(direction, board, p, piece, max_iter, list, iter, kill)
         end
       else
         if piece_p == nil or piece_p.color == piece.color or kill == :forbidden do
           list
         else
-          [p|list]
+          [p | list]
         end
       end
     end
   end
 
-  def castling_positions(%Board{} = board,position,%Piece{} = piece) do
+  defp get_position_by_direction(:up, position, color), do: new_position(position, color, 0, 1)
+  defp get_position_by_direction(:down, position, color), do: new_position(position, color, 0, -1)
+  defp get_position_by_direction(:right, position, color), do: new_position(position, color, 1, 0)
+  defp get_position_by_direction(:left, position, color), do: new_position(position, color, -1, 0)
+  defp get_position_by_direction(:up_right, position, color), do: new_position(position, color, 1, 1)
+  defp get_position_by_direction(:up_left, position, color), do: new_position(position, color, -1, 1)
+  defp get_position_by_direction(:down_right, position, color), do: new_position(position, color, 1, -1)
+  defp get_position_by_direction(:down_left, position, color), do: new_position(position, color, -1, -1)
+
+  def castling_positions(%Board{} = board, position, %Piece{} = piece) do
     if piece.moved do
       []
     else
-      rooks = [Piece.original_position(piece.color,:queen_rook),Piece.original_position(piece.color,:king_rook)]
+      rooks = [
+        Piece.original_position(piece.color, :queen_rook),
+        Piece.original_position(piece.color, :king_rook)
+      ]
+
       in_between = [
         [
-          Piece.original_position(piece.color,:queen_knight),
-          Piece.original_position(piece.color,:queen_bishop),
-          Piece.original_position(piece.color,:queen)
+          Piece.original_position(piece.color, :queen_knight),
+          Piece.original_position(piece.color, :queen_bishop),
+          Piece.original_position(piece.color, :queen)
         ],
         [
-          Piece.original_position(piece.color,:king_knight),
-          Piece.original_position(piece.color,:king_bishop)
+          Piece.original_position(piece.color, :king_knight),
+          Piece.original_position(piece.color, :king_bishop)
         ]
       ]
 
       for x <- 0..1 do
-        rook_position = Enum.at(rooks,x)
-        rook = Board.get_piece(board,rook_position)
+        rook_position = Enum.at(rooks, x)
+        rook = Board.get_piece(board, rook_position)
+
         if rook == nil or rook.moved do
           nil
         else
-          positions = Enum.at(in_between,x)
+          positions = Enum.at(in_between, x)
 
           list =
             for p <- positions do
-              Board.get_piece(board,p)
+              Board.get_piece(board, p)
             end
-            |> Enum.filter(& &1 != nil)
+            |> Enum.filter(&(&1 != nil))
 
           if list == [] do
             delta_x = if x == 0, do: -2, else: 2
 
-            {status,new_p} = Board.new_position(position,delta_x,0)
+            {status, new_p} = Board.new_position(position, delta_x, 0)
 
             if status == :ok do
               new_p
@@ -219,61 +240,61 @@ defmodule Chess.Board do
           end
         end
       end
-      |> Enum.filter(& &1 != nil)
+      |> Enum.filter(&(&1 != nil))
     end
   end
 
-  defp add_captured(%Board{} = board,%Piece{color: :white} = piece) do
-    %Board{board | white_captured: [piece|board.white_captured]}
+  defp add_captured(%Board{} = board, %Piece{color: :white} = piece) do
+    %Board{board | white_captured: [piece | board.white_captured]}
   end
 
-  defp add_captured(%Board{} = board,%Piece{color: :black} = piece) do
-    %Board{board | black_captured: [piece|board.black_captured]}
+  defp add_captured(%Board{} = board, %Piece{color: :black} = piece) do
+    %Board{board | black_captured: [piece | board.black_captured]}
   end
 
-  defp add_captured(%Board{} = board,nil) do
+  defp add_captured(%Board{} = board, nil) do
     board
   end
 
-  defp kill(%Board{} = board,%Piece{} = piece) do
-    board = add_captured(board,piece)
-    %Board{board | pieces: List.delete(board.pieces,piece)}
+  defp kill(%Board{} = board, %Piece{} = piece) do
+    board = add_captured(board, piece)
+    %Board{board | pieces: List.delete(board.pieces, piece)}
   end
 
-  defp maybe_kill(%Board{} = board,%Piece{} = killer_piece,position) do
-    piece = get_piece(board,position)
+  defp maybe_kill(%Board{} = board, %Piece{} = killer_piece, position) do
+    piece = get_piece(board, position)
 
     if piece == nil do
-      en_passant = en_passant_kill_position(board,killer_piece,position)
+      en_passant = en_passant_kill_position(board, killer_piece, position)
 
       if en_passant == nil do
         board
       else
-        kill(board,get_piece(board,en_passant))
+        kill(board, get_piece(board, en_passant))
       end
     else
-      kill(board,piece)
+      kill(board, piece)
     end
   end
 
-  defp maybe_castling_rook(%Board{} = board,%Piece{} = piece,position) do
+  defp maybe_castling_rook(%Board{} = board, %Piece{} = piece, position) do
     if piece.class == :king do
-      cpositions = castling_positions(board,piece.position,piece)
+      cpositions = castling_positions(board, piece.position, piece)
 
       if position in cpositions do
-        {rook,new_p} =
+        {rook, new_p} =
           case position do
-            "c1" -> {get_piece(board,"a1"),"d1"}
-            "g1" -> {get_piece(board,"h1"),"f1"}
-            "c8" -> {get_piece(board,"a8"),"d8"}
-            "g8" -> {get_piece(board,"h8"),"f8"}
-            _ -> {nil,nil}
+            "c1" -> {get_piece(board, "a1"), "d1"}
+            "g1" -> {get_piece(board, "h1"), "f1"}
+            "c8" -> {get_piece(board, "a8"), "d8"}
+            "g8" -> {get_piece(board, "h8"), "f8"}
+            _ -> {nil, nil}
           end
 
         if rook == nil do
           board
         else
-          set_new_position(board,rook,new_p)
+          set_new_position(board, rook, new_p)
         end
       end
     else
@@ -281,77 +302,91 @@ defmodule Chess.Board do
     end
   end
 
-  defp set_new_position(%Board{} = board,%Piece{} = piece,position) do
-    %Board{board | pieces: Enum.map(board.pieces, fn x -> if x.position == piece.position, do: Piece.set_position(piece,position), else: x end)}
+  defp set_new_position(%Board{} = board, %Piece{} = piece, position) do
+    %Board{
+      board
+      | pieces:
+          Enum.map(board.pieces, fn x ->
+            if x.position == piece.position, do: Piece.set_position(piece, position), else: x
+          end)
+    }
   end
 
-  defp add_move(%Board{} = board,type,from,to) do
-    %Board{board | moves: [{type,from,to}|board.moves]}
+  defp add_move(%Board{} = board, type, from, to) do
+    %Board{board | moves: [{type, from, to} | board.moves]}
   end
 
-  def move(%Board{} = board,from,to) do
-    piece = get_piece(board,from)
+  def move(%Board{} = board, from, to) do
+    piece = get_piece(board, from)
 
     if(piece == nil) do
-      {:empty_position,board}
+      {:empty_position, board}
     else
-      pp = possible_positions(board,from)
+      pp = possible_positions(board, from)
 
       if to not in pp do
-        {:not_allowed,board}
+        {:not_allowed, board}
       else
         board =
-          add_move(board,piece.type,from,to)
-          |> maybe_kill(piece,to)
-          |> maybe_castling_rook(piece,to)
-          |> set_new_position(piece,to)
+          add_move(board, piece.type, from, to)
+          |> maybe_kill(piece, to)
+          |> maybe_castling_rook(piece, to)
+          |> set_new_position(piece, to)
 
-        {:ok,board}
+        {:ok, board}
       end
     end
   end
 
-  defp print_line(%Board{} = board,y,marks) do
+  defp print_line(%Board{} = board, y, marks) do
     linha =
       for x <- 0..7 do
-        position = xy_2_position({x,y})
-        piece = get_piece(board,position)
+        position = xy_2_position({x, y})
+        piece = get_piece(board, position)
 
         if position in marks do
           if piece == nil, do: "< >", else: "> <"
         else
-          if piece == nil, do: "[ ]", else: Piece.get_color(piece.color) <> Piece.get_name(piece.class) <> Piece.get_color(piece.color)
+          if piece == nil,
+            do: "[ ]",
+            else:
+              Piece.get_color(piece.color) <>
+                Piece.get_name(piece.class) <> Piece.get_color(piece.color)
         end
       end
       |> Enum.join()
 
-    "#{y+1} #{linha} #{y+1}"
+    "#{y + 1} #{linha} #{y + 1}"
   end
 
-  def print(%Board{} = board,pos_highlight \\ "") do
-    marks = if pos_highlight == "", do: [], else: possible_positions(board,pos_highlight)
+  def print(%Board{} = board, pos_highlight \\ "") do
+    marks = if pos_highlight == "", do: [], else: possible_positions(board, pos_highlight)
 
     IO.puts("   A  B  C  D  E  F  G  H \n")
+
     for y <- 7..0 do
-      IO.puts(print_line(board,y,marks))
+      IO.puts(print_line(board, y, marks))
     end
+
     IO.puts("\n   A  B  C  D  E  F  G  H ")
     IO.puts("#{marks}")
   end
 
   def print_moves(%Board{} = board) do
-    for {type,from,to} <- board.moves do
+    for {type, from, to} <- board.moves do
       IO.puts("#{type} #{from} #{to}")
     end
   end
 
   def print_captures(%Board{} = board) do
     IO.puts("black:")
+
     for x <- board.white_captured do
       IO.puts("#{x.type} #{x.color}")
     end
 
     IO.puts("white:")
+
     for x <- board.black_captured do
       IO.puts("#{x.type} #{x.color}")
     end
