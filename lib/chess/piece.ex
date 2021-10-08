@@ -1,4 +1,8 @@
 defmodule Chess.Piece do
+  @moduledoc """
+  Piece module.
+  """
+
   defstruct type: nil,
             color: nil,
             position: nil,

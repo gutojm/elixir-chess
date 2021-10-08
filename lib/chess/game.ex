@@ -1,4 +1,8 @@
 defmodule Chess.Game do
+  @moduledoc """
+  Game module.
+  """
+
   defstruct turn: :white,
             board: nil
 

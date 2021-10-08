@@ -1,4 +1,8 @@
 defmodule Chess.Board do
+  @moduledoc """
+  Board module.
+  """
+
   defstruct pieces: [],
             moves: [],
             white_captured: [],
@@ -77,8 +81,8 @@ defmodule Chess.Board do
     |> build_new_position(position, deltax, deltay)
   end
 
-  defp build_new_position({axf, axb, ayf, ayb}, position, deltax, deltay) when
-        (deltax < axb or deltax > axf or deltay < ayb or deltay > ayf) do
+  defp build_new_position({axf, axb, ayf, ayb}, position, deltax, deltay)
+       when deltax < axb or deltax > axf or deltay < ayb or deltay > ayf do
     {:invalid_position, position}
   end
 
@@ -184,10 +188,18 @@ defmodule Chess.Board do
   defp get_position_by_direction(:down, position, color), do: new_position(position, color, 0, -1)
   defp get_position_by_direction(:right, position, color), do: new_position(position, color, 1, 0)
   defp get_position_by_direction(:left, position, color), do: new_position(position, color, -1, 0)
-  defp get_position_by_direction(:up_right, position, color), do: new_position(position, color, 1, 1)
-  defp get_position_by_direction(:up_left, position, color), do: new_position(position, color, -1, 1)
-  defp get_position_by_direction(:down_right, position, color), do: new_position(position, color, 1, -1)
-  defp get_position_by_direction(:down_left, position, color), do: new_position(position, color, -1, -1)
+
+  defp get_position_by_direction(:up_right, position, color),
+    do: new_position(position, color, 1, 1)
+
+  defp get_position_by_direction(:up_left, position, color),
+    do: new_position(position, color, -1, 1)
+
+  defp get_position_by_direction(:down_right, position, color),
+    do: new_position(position, color, 1, -1)
+
+  defp get_position_by_direction(:down_left, position, color),
+    do: new_position(position, color, -1, -1)
 
   def castling_positions(%Board{} = board, position, %Piece{} = piece) do
     if piece.moved do
@@ -302,7 +314,11 @@ defmodule Chess.Board do
     end
   end
 
-  defp set_new_position(%Board{} = board, %Piece{} = piece, position) do
+  @doc """
+  sets a new position to a piece, no critics
+  """
+
+  def set_new_position(%Board{} = board, %Piece{} = piece, position) do
     %Board{
       board
       | pieces:
@@ -319,14 +335,12 @@ defmodule Chess.Board do
   def move(%Board{} = board, from, to) do
     piece = get_piece(board, from)
 
-    if(piece == nil) do
+    if piece == nil do
       {:empty_position, board}
     else
       pp = possible_positions(board, from)
 
-      if to not in pp do
-        {:not_allowed, board}
-      else
+      if to in pp do
         board =
           add_move(board, piece.type, from, to)
           |> maybe_kill(piece, to)
@@ -334,6 +348,8 @@ defmodule Chess.Board do
           |> set_new_position(piece, to)
 
         {:ok, board}
+      else
+        {:not_allowed, board}
       end
     end
   end

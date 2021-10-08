@@ -1,7 +1,13 @@
 defmodule Chess.Rook do
-  alias Chess.Board
-  alias Chess.Piece
+  @moduledoc """
+  Rook module.
+  """
 
+  alias Chess.{Board, Piece}
+
+  @doc """
+  Return a list of possible positions for a given board, position
+  """
   def possible_positions(%Board{} = board, position, %Piece{} = piece) do
     Board.possible_positions(:up, board, position, piece, 0, [], 0) ++
       Board.possible_positions(:right, board, position, piece, 0, [], 0) ++

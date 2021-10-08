@@ -1,4 +1,6 @@
 defmodule Chess.King do
+  @moduledoc false
+
   alias Chess.Board
   alias Chess.Piece
 

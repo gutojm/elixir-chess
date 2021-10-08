@@ -1,4 +1,6 @@
 defmodule Chess.Bishop do
+  @moduledoc false
+
   alias Chess.Board
   alias Chess.Piece
 
