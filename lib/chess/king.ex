@@ -14,7 +14,5 @@ defmodule Chess.King do
       Board.possible_positions(:down_left, board, position, piece, 1, [], 0) ++
       Board.possible_positions(:down_right, board, position, piece, 1, [], 0) ++
       Board.castling_positions(board, position, piece)
-
-    # falta o roque
   end
 end

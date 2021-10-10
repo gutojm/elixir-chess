@@ -44,7 +44,7 @@ defmodule Chess.KnightTest do
       {board, result} = move_and_test(board, "g8", "h6", ["f5", "g4"])
       assert result
 
-      {_, result} = move_and_test(board, "h6", "g4", ["f6", "h6", "e5", "e3", "f2", "h2" ])
+      {_, result} = move_and_test(board, "h6", "g4", ["f6", "h6", "e5", "e3", "f2", "h2"])
       assert result
     end
   end

@@ -264,9 +264,9 @@ defmodule Chess.Board do
     %Board{board | black_captured: [piece | board.black_captured]}
   end
 
-  defp add_captured(%Board{} = board, nil) do
-    board
-  end
+  # defp add_captured(%Board{} = board, nil) do
+  #  board
+  # end
 
   defp kill(%Board{} = board, %Piece{} = piece) do
     board = add_captured(board, piece)
