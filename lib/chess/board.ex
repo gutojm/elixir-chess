@@ -44,7 +44,7 @@ defmodule Chess.Board do
   #   end
   # end
 
-  def delta_available(position) do
+  defp delta_available(position) do
     {x, y} = position_2_xy(position)
     axf = 7 - x
     axb = 0 - x
@@ -58,18 +58,18 @@ defmodule Chess.Board do
     {minx, miny}
   end
 
-  def position_2_xy(position) do
+  defp position_2_xy(position) do
     {minx, miny} = minxy()
     <<x::utf8, y::utf8>> = position
     {x - minx, y - miny}
   end
 
-  def xy_2_position({x, y}) do
+  defp xy_2_position({x, y}) do
     {minx, miny} = minxy()
     <<minx + x::utf8, miny + y::utf8>>
   end
 
-  def absolute_deltas(p1, p2) do
+  defp absolute_deltas(p1, p2) do
     {x1, y1} = position_2_xy(p1)
     {x2, y2} = position_2_xy(p2)
     {abs(x1 - x2), abs(y1 - y2)}
@@ -93,6 +93,10 @@ defmodule Chess.Board do
 
     {:ok, <<x::utf8, y::utf8>>}
   end
+
+  @doc """
+  based on a destination position of a pawn returns a position for a en passant kill
+  """
 
   def en_passant_kill_position(%Board{} = board, %Piece{} = killer_piece, to) do
     piece = get_piece(board, to)
