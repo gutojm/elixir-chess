@@ -1,7 +1,7 @@
 defmodule Chess.BishopTest do
   use ExUnit.Case
 
-  alias Chess.{Board, Bishop}
+  alias Chess.{Board, Bishop, Piece}
 
   setup do
     board = Board.new()
@@ -38,6 +38,8 @@ defmodule Chess.BishopTest do
                  "c4",
                  "b3"
                ] -- Bishop.possible_positions(board, "d5", wq_bishop)
+
+      assert %Piece{color: :black} = Board.get_piece(board, "f7")
     end
   end
 end

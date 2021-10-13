@@ -61,12 +61,15 @@ defmodule Chess.KingTest do
       bk_bishop: bk_bishop,
       bk_knight: bk_knight
     } do
-      board = Board.set_new_position(board, bk_bishop, "a3")
-      board = Board.set_new_position(board, bk_knight, "b3")
-      # apenas para setar o status de moved da peça
-      board = Board.set_new_position(board, b_king, "e8")
+      positions =
+        board
+        |> Board.set_new_position(bk_bishop, "a3")
+        |> Board.set_new_position(bk_knight, "b3")
+        # apenas para setar o status de moved da peça
+        |> Board.set_new_position(b_king, "e8")
+        |> King.possible_positions("e8", b_king)
 
-      assert [] = ["f8"] -- King.possible_positions(board, "e8", b_king)
+      assert [] = ["f8"] -- positions
     end
   end
 end

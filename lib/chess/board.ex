@@ -3,6 +3,8 @@ defmodule Chess.Board do
   Board module.
   """
 
+  @type direction :: :up | :down | :left | :right | :up_left | :up_right | :down_left | :down_right
+
   defstruct pieces: [],
             moves: [],
             white_captured: [],
@@ -75,6 +77,8 @@ defmodule Chess.Board do
     {abs(x1 - x2), abs(y1 - y2)}
   end
 
+  def new_position(position, :white, deltax, deltay), do: new_position(position, deltax, deltay)
+  def new_position(position, :black, deltax, deltay), do: new_position(position, -deltax, -deltay)
   def new_position(position, deltax, deltay) do
     position
     |> delta_available()
@@ -130,28 +134,28 @@ defmodule Chess.Board do
     end
   end
 
-  def new_position(position, :white, deltax, deltay), do: new_position(position, deltax, deltay)
-  def new_position(position, :black, deltax, deltay), do: new_position(position, -deltax, -deltay)
-
   def possible_positions(%Board{} = board, position) do
     piece = get_piece(board, position)
 
-    if piece == nil do
-      []
-    else
-      case piece.class do
-        :pawn -> Pawn.possible_positions(board, position, piece)
-        :rook -> Rook.possible_positions(board, position, piece)
-        :knight -> Knight.possible_positions(board, position, piece)
-        :bishop -> Bishop.possible_positions(board, position, piece)
-        :queen -> Queen.possible_positions(board, position, piece)
-        :king -> King.possible_positions(board, position, piece)
-        _ -> []
-      end
+    do_possible_positions(%Board{} = board, position, piece)
+  end
+
+  defp do_possible_positions(%Board{} = _board, _position, nil), do: []
+  defp do_possible_positions(%Board{} = board, position, %Piece{class: class} = piece) do
+    case class do
+      :pawn -> Pawn.possible_positions(board, position, piece)
+      :rook -> Rook.possible_positions(board, position, piece)
+      :knight -> Knight.possible_positions(board, position, piece)
+      :bishop -> Bishop.possible_positions(board, position, piece)
+      :queen -> Queen.possible_positions(board, position, piece)
+      :king -> King.possible_positions(board, position, piece)
+      _ -> []
     end
   end
 
-  def possible_positions(
+
+  @spec possible_straight_positions(direction, map(), binary(), map(), integer(), list(), integer(), atom()) :: list()
+  def possible_straight_positions(
         direction,
         %Board{} = board,
         position,
@@ -176,7 +180,7 @@ defmodule Chess.Board do
         if iter == max_iter do
           list
         else
-          possible_positions(direction, board, p, piece, max_iter, list, iter, kill)
+          possible_straight_positions(direction, board, p, piece, max_iter, list, iter, kill)
         end
       else
         if piece_p == nil or piece_p.color == piece.color or kill == :forbidden do
@@ -338,24 +342,25 @@ defmodule Chess.Board do
 
   def move(%Board{} = board, from, to) do
     piece = get_piece(board, from)
+    do_move(board, from, to, piece)
+  end
 
-    if piece == nil do
-      {:empty_position, board}
-    else
-      pp = possible_positions(board, from)
+  defp do_move(board, _, _, nil), do: {:empty_position, board}
+  defp do_move(board, from, to, piece) do
+    pp = possible_positions(board, from)
 
-      if to in pp do
-        board =
-          add_move(board, piece.type, from, to)
-          |> maybe_kill(piece, to)
-          |> maybe_castling_rook(piece, to)
-          |> set_new_position(piece, to)
+    if to in pp do
+      board =
+        add_move(board, piece.type, from, to)
+        |> maybe_kill(piece, to)
+        |> maybe_castling_rook(piece, to)
+        |> set_new_position(piece, to)
 
-        {:ok, board}
-      else
-        {:not_allowed, board}
-      end
-    end
+      {:ok, board}
+
+     else
+      {:not_allowed, board}
+     end
   end
 
   defp print_line(%Board{} = board, y, marks) do
