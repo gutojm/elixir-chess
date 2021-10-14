@@ -1,4 +1,11 @@
 defmodule Chess.Board do
+  @moduledoc """
+  Board module.
+  """
+
+  @type direction ::
+          :up | :down | :left | :right | :up_left | :up_right | :down_left | :down_right
+
   defstruct pieces: [],
             moves: [],
             white_captured: [],
@@ -40,7 +47,7 @@ defmodule Chess.Board do
   #   end
   # end
 
-  def delta_available(position) do
+  defp delta_available(position) do
     {x, y} = position_2_xy(position)
     axf = 7 - x
     axb = 0 - x
@@ -54,22 +61,25 @@ defmodule Chess.Board do
     {minx, miny}
   end
 
-  def position_2_xy(position) do
+  defp position_2_xy(position) do
     {minx, miny} = minxy()
     <<x::utf8, y::utf8>> = position
     {x - minx, y - miny}
   end
 
-  def xy_2_position({x, y}) do
+  defp xy_2_position({x, y}) do
     {minx, miny} = minxy()
     <<minx + x::utf8, miny + y::utf8>>
   end
 
-  def absolute_deltas(p1, p2) do
+  defp absolute_deltas(p1, p2) do
     {x1, y1} = position_2_xy(p1)
     {x2, y2} = position_2_xy(p2)
     {abs(x1 - x2), abs(y1 - y2)}
   end
+
+  def new_position(position, :white, deltax, deltay), do: new_position(position, deltax, deltay)
+  def new_position(position, :black, deltax, deltay), do: new_position(position, -deltax, -deltay)
 
   def new_position(position, deltax, deltay) do
     position
@@ -77,8 +87,8 @@ defmodule Chess.Board do
     |> build_new_position(position, deltax, deltay)
   end
 
-  defp build_new_position({axf, axb, ayf, ayb}, position, deltax, deltay) when
-        (deltax < axb or deltax > axf or deltay < ayb or deltay > ayf) do
+  defp build_new_position({axf, axb, ayf, ayb}, position, deltax, deltay)
+       when deltax < axb or deltax > axf or deltay < ayb or deltay > ayf do
     {:invalid_position, position}
   end
 
@@ -89,6 +99,10 @@ defmodule Chess.Board do
 
     {:ok, <<x::utf8, y::utf8>>}
   end
+
+  @doc """
+  based on a destination position of a pawn returns a position for a en passant kill
+  """
 
   def en_passant_kill_position(%Board{} = board, %Piece{} = killer_piece, to) do
     piece = get_piece(board, to)
@@ -122,72 +136,187 @@ defmodule Chess.Board do
     end
   end
 
-  def new_position(position, :white, deltax, deltay), do: new_position(position, deltax, deltay)
-  def new_position(position, :black, deltax, deltay), do: new_position(position, -deltax, -deltay)
-
   def possible_positions(%Board{} = board, position) do
     piece = get_piece(board, position)
 
-    if piece == nil do
-      []
-    else
-      case piece.class do
-        :pawn -> Pawn.possible_positions(board, position, piece)
-        :rook -> Rook.possible_positions(board, position, piece)
-        :knight -> Knight.possible_positions(board, position, piece)
-        :bishop -> Bishop.possible_positions(board, position, piece)
-        :queen -> Queen.possible_positions(board, position, piece)
-        :king -> King.possible_positions(board, position, piece)
-        _ -> []
-      end
+    do_possible_positions(%Board{} = board, position, piece)
+  end
+
+  defp do_possible_positions(%Board{} = _board, _position, nil), do: []
+
+  defp do_possible_positions(%Board{} = board, position, %Piece{class: class}) do
+    case class do
+      :pawn -> Pawn.possible_positions(board, position)
+      :rook -> Rook.possible_positions(board, position)
+      :knight -> Knight.possible_positions(board, position)
+      :bishop -> Bishop.possible_positions(board, position)
+      :queen -> Queen.possible_positions(board, position)
+      :king -> King.possible_positions(board, position)
+      _ -> []
     end
   end
 
-  def possible_positions(
-        direction,
-        %Board{} = board,
-        position,
-        %Piece{} = piece,
-        max_iter,
-        list,
-        iter,
-        kill \\ :allowed
-      ) do
+  # proxima posicao inválida, retorna lista atual
+  defp do_possible_straight_positions(%{
+         status: :invalid_position,
+         list: list
+       }) do
+    list
+  end
+
+  # proxima posição válida e desocupada, mas a morte é obrigatória, retorna a lista atual
+  defp do_possible_straight_positions(%{
+         status: :ok,
+         piece_on_destination: nil,
+         list: list,
+         kill: :mandatory
+       }) do
+    list
+  end
+
+  # proxima posição válida e desocupada retorna a lista atual acrescida da nova posição
+  defp do_possible_straight_positions(%{
+         status: :ok,
+         position: position,
+         piece_on_destination: nil,
+         max_iter: max_iter,
+         list: list,
+         iter: iter
+       })
+       when iter == max_iter do
+    [position | list]
+  end
+
+  # proxima posição válida e desocupada, número maximo de interações não atingido, vai pra próxima
+  defp do_possible_straight_positions(%{
+         status: :ok,
+         direction: direction,
+         board: board,
+         position: position,
+         piece: piece,
+         piece_on_destination: nil,
+         max_iter: max_iter,
+         list: list,
+         iter: iter,
+         kill: kill
+       }) do
+    do_possible_straight_positions(%{
+      status: :next,
+      direction: direction,
+      board: board,
+      position: position,
+      piece: piece,
+      max_iter: max_iter,
+      list: [position | list],
+      iter: iter,
+      kill: kill
+    })
+  end
+
+  # próxima casa ocupada por peça da mesma cor, retorna a lista atual
+  defp do_possible_straight_positions(%{
+         status: :ok,
+         piece: piece,
+         piece_on_destination: piece_on_destination,
+         list: list
+       })
+       when piece.color == piece_on_destination.color do
+    list
+  end
+
+  # próxima casa ocupada por peça de outra cor, morte proibida, retorna a lista
+  defp do_possible_straight_positions(%{
+         status: :ok,
+         piece: piece,
+         piece_on_destination: piece_on_destination,
+         list: list,
+         kill: :forbidden
+       })
+       when piece.color != piece_on_destination.color do
+    list
+  end
+
+  # próxima casa ocupada por peça de outra cor, acrescenta a posição atual e retorna a lista
+  defp do_possible_straight_positions(%{
+         status: :ok,
+         position: position,
+         piece: piece,
+         piece_on_destination: piece_on_destination,
+         list: list
+       })
+       when piece.color != piece_on_destination.color do
+    [position | list]
+  end
+
+  # itera pra próxima casa
+  defp do_possible_straight_positions(%{
+         status: :next,
+         direction: direction,
+         board: %Board{} = board,
+         position: position,
+         piece: %Piece{} = piece,
+         max_iter: max_iter,
+         list: list,
+         iter: iter,
+         kill: kill
+       }) do
     iter = iter + 1
 
     {status, p} = get_position_by_direction(direction, position, piece.color)
+    piece_on_destination = Board.get_piece(board, p)
 
-    if status == :invalid_position do
-      list
-    else
-      piece_p = get_piece(board, p)
+    do_possible_straight_positions(%{
+      status: status,
+      direction: direction,
+      board: board,
+      position: p,
+      piece: piece,
+      piece_on_destination: piece_on_destination,
+      max_iter: max_iter,
+      list: list,
+      iter: iter,
+      kill: kill
+    })
+  end
 
-      if piece_p == nil and kill != :mandatory do
-        list = [p | list]
+  def possible_straight_positions(
+        direction,
+        %Board{} = board,
+        position,
+        max_iter \\ 0,
+        kill \\ :allowed
+      ) do
+    piece = Board.get_piece(board, position)
 
-        if iter == max_iter do
-          list
-        else
-          possible_positions(direction, board, p, piece, max_iter, list, iter, kill)
-        end
-      else
-        if piece_p == nil or piece_p.color == piece.color or kill == :forbidden do
-          list
-        else
-          [p | list]
-        end
-      end
-    end
+    do_possible_straight_positions(%{
+      status: :next,
+      direction: direction,
+      board: board,
+      position: position,
+      piece: piece,
+      max_iter: max_iter,
+      list: [],
+      iter: 0,
+      kill: kill
+    })
   end
 
   defp get_position_by_direction(:up, position, color), do: new_position(position, color, 0, 1)
   defp get_position_by_direction(:down, position, color), do: new_position(position, color, 0, -1)
   defp get_position_by_direction(:right, position, color), do: new_position(position, color, 1, 0)
   defp get_position_by_direction(:left, position, color), do: new_position(position, color, -1, 0)
-  defp get_position_by_direction(:up_right, position, color), do: new_position(position, color, 1, 1)
-  defp get_position_by_direction(:up_left, position, color), do: new_position(position, color, -1, 1)
-  defp get_position_by_direction(:down_right, position, color), do: new_position(position, color, 1, -1)
-  defp get_position_by_direction(:down_left, position, color), do: new_position(position, color, -1, -1)
+
+  defp get_position_by_direction(:up_right, position, color),
+    do: new_position(position, color, 1, 1)
+
+  defp get_position_by_direction(:up_left, position, color),
+    do: new_position(position, color, -1, 1)
+
+  defp get_position_by_direction(:down_right, position, color),
+    do: new_position(position, color, 1, -1)
+
+  defp get_position_by_direction(:down_left, position, color),
+    do: new_position(position, color, -1, -1)
 
   def castling_positions(%Board{} = board, position, %Piece{} = piece) do
     if piece.moved do
@@ -252,9 +381,9 @@ defmodule Chess.Board do
     %Board{board | black_captured: [piece | board.black_captured]}
   end
 
-  defp add_captured(%Board{} = board, nil) do
-    board
-  end
+  # defp add_captured(%Board{} = board, nil) do
+  #  board
+  # end
 
   defp kill(%Board{} = board, %Piece{} = piece) do
     board = add_captured(board, piece)
@@ -302,7 +431,11 @@ defmodule Chess.Board do
     end
   end
 
-  defp set_new_position(%Board{} = board, %Piece{} = piece, position) do
+  @doc """
+  sets a new position to a piece, no critics
+  """
+
+  def set_new_position(%Board{} = board, %Piece{} = piece, position) do
     %Board{
       board
       | pieces:
@@ -318,23 +451,24 @@ defmodule Chess.Board do
 
   def move(%Board{} = board, from, to) do
     piece = get_piece(board, from)
+    do_move(board, from, to, piece)
+  end
 
-    if(piece == nil) do
-      {:empty_position, board}
+  defp do_move(board, _, _, nil), do: {:empty_position, board}
+
+  defp do_move(board, from, to, piece) do
+    pp = possible_positions(board, from)
+
+    if to in pp do
+      board =
+        add_move(board, piece.type, from, to)
+        |> maybe_kill(piece, to)
+        |> maybe_castling_rook(piece, to)
+        |> set_new_position(piece, to)
+
+      {:ok, board}
     else
-      pp = possible_positions(board, from)
-
-      if to not in pp do
-        {:not_allowed, board}
-      else
-        board =
-          add_move(board, piece.type, from, to)
-          |> maybe_kill(piece, to)
-          |> maybe_castling_rook(piece, to)
-          |> set_new_position(piece, to)
-
-        {:ok, board}
-      end
+      {:not_allowed, board}
     end
   end
 

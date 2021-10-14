@@ -1,4 +1,8 @@
 defmodule Chess.Piece do
+  @moduledoc """
+  Piece module.
+  """
+
   defstruct type: nil,
             color: nil,
             position: nil,
@@ -116,9 +120,18 @@ defmodule Chess.Piece do
     }
   end
 
+  # TODO - validate position
+
   def set_position(%Piece{} = piece, position) do
-    %Piece{piece | position: position, moved: true, moves: [{piece.position, position}]}
+    %Piece{
+      piece
+      | position: position,
+        moved: true,
+        moves: [{piece.position, position} | piece.moves]
+    }
   end
+
+  # TODO - validate color
 
   def enemy_color(color) do
     if color == :white do
@@ -127,68 +140,4 @@ defmodule Chess.Piece do
       :white
     end
   end
-
-  # def get_king(color) do
-  #   get_piece(:king,color)
-  # end
-
-  # def get_queen(color) do
-  #   get_piece(:queen,color)
-  # end
-
-  # def get_king_bishop(color) do
-  #   get_piece(:king_bishop,color)
-  # end
-
-  # def get_queen_bishop(color) do
-  #   get_piece(:queen_bishop,color)
-  # end
-
-  # def get_king_knight(color) do
-  #   get_piece(:king_knight,color)
-  # end
-
-  # def get_queen_knight(color) do
-  #   get_piece(:queen_knight,color)
-  # end
-
-  # def get_king_rook(color) do
-  #   get_piece(:king_rook,color)
-  # end
-
-  # def get_queen_rook(color) do
-  #   get_piece(:queen_rook,color)
-  # end
-
-  # def get_king_pawn(color) do
-  #   get_piece(:king_pawn,color)
-  # end
-
-  # def get_queen_pawn(color) do
-  #   get_piece(:queen_pawn,color)
-  # end
-
-  # def get_king_bishop_pawn(color) do
-  #   get_piece(:king_bishop_pawn,color)
-  # end
-
-  # def get_queen_bishop_pawn(color) do
-  #   get_piece(:queen_bishop_pawn,color)
-  # end
-
-  # def get_king_knight_pawn(color) do
-  #   get_piece(:king_knight_pawn,color)
-  # end
-
-  # def get_queen_knight_pawn(color) do
-  #   get_piece(:queen_knight_pawn,color)
-  # end
-
-  # def get_king_rook_pawn(color) do
-  #   get_piece(:king_rook_pawn,color)
-  # end
-
-  # def get_queen_rook_pawn(color) do
-  #   get_piece(:queen_rook_pawn,color)
-  # end
 end

@@ -1,11 +1,12 @@
 defmodule Chess.Bishop do
-  alias Chess.Board
-  alias Chess.Piece
+  @moduledoc false
 
-  def possible_positions(%Board{} = board, position, %Piece{} = piece) do
-    Board.possible_positions(:up_left, board, position, piece, 0, [], 0) ++
-      Board.possible_positions(:up_right, board, position, piece, 0, [], 0) ++
-      Board.possible_positions(:down_left, board, position, piece, 0, [], 0) ++
-      Board.possible_positions(:down_right, board, position, piece, 0, [], 0)
+  alias Chess.Board
+
+  def possible_positions(%Board{} = board, position) do
+    Board.possible_straight_positions(:up_left, board, position) ++
+      Board.possible_straight_positions(:up_right, board, position) ++
+      Board.possible_straight_positions(:down_left, board, position) ++
+      Board.possible_straight_positions(:down_right, board, position)
   end
 end
