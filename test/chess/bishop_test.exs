@@ -6,7 +6,6 @@ defmodule Chess.BishopTest do
   setup do
     board = Board.new()
 
-
     %{
       board: board,
       wq_bishop: Board.get_piece(board, "c1")

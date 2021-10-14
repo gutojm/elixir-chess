@@ -33,7 +33,7 @@ defmodule Chess.KnightTest do
       assert {board, true} = move_and_test(board, "b1", "c3", ["a4", "e4", "b5", "d5"])
 
       assert {board, true} =
-        move_and_test(board, "c3", "d5", ["c3", "e3", "b4", "f4", "b6", "f6", "c7", "e7"])
+               move_and_test(board, "c3", "d5", ["c3", "e3", "b4", "f4", "b6", "f6", "c7", "e7"])
 
       # black
       assert [] = ["f6", "h6"] -- Knight.possible_positions(board, "g8", bk_knight)

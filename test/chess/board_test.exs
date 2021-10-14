@@ -35,14 +35,14 @@ defmodule Chess.BoardTest do
     test "success", %{board: board, wqb_pawn: wqb_pawn} do
       board = Board.set_new_position(board, wqb_pawn, "c5")
       {_, board} = Board.move(board, "d7", "d5")
-      assert "d5" = Board.en_passant_kill_position(board, Board.get_piece(board,"c5"), "d6")
+      assert "d5" = Board.en_passant_kill_position(board, Board.get_piece(board, "c5"), "d6")
     end
 
     test "failed", %{board: board, wqb_pawn: wqb_pawn} do
       board = Board.set_new_position(board, wqb_pawn, "c5")
       {_, board} = Board.move(board, "d7", "d6")
       {_, board} = Board.move(board, "d6", "d5")
-      assert nil == Board.en_passant_kill_position(board, Board.get_piece(board,"c5"), "d6")
+      assert nil == Board.en_passant_kill_position(board, Board.get_piece(board, "c5"), "d6")
     end
   end
 end

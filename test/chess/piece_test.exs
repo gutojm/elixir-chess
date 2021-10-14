@@ -35,23 +35,25 @@ defmodule Chess.PieceTest do
   end
 
   test "new/2" do
-    assert %Piece{type: :king, color: :white, class: :king, position: "e1"} = Piece.new(:king,:white)
-    assert :invalid_type = Piece.new(:kingo,:white)
-    assert :invalid_color = Piece.new(:king,:blue)
+    assert %Piece{type: :king, color: :white, class: :king, position: "e1"} =
+             Piece.new(:king, :white)
+
+    assert :invalid_type = Piece.new(:kingo, :white)
+    assert :invalid_color = Piece.new(:king, :blue)
   end
 
   test "original_position/2" do
-    assert "e1" = Piece.original_position(:white,:king)
-    assert :invalid_type = Piece.original_position(:white,:kingo)
-    assert :invalid_color = Piece.original_position(:blue,:king)
+    assert "e1" = Piece.original_position(:white, :king)
+    assert :invalid_type = Piece.original_position(:white, :kingo)
+    assert :invalid_color = Piece.original_position(:blue, :king)
   end
 
   test "set_position/2" do
-    piece = Piece.new(:king,:white)
-    piece = Piece.set_position(piece,"e3")
+    piece = Piece.new(:king, :white)
+    piece = Piece.set_position(piece, "e3")
     assert %Piece{position: "e3", moved: true} = piece
 
-    piece = Piece.set_position(piece,"e5")
+    piece = Piece.set_position(piece, "e5")
     assert 2 = length(piece.moves)
   end
 

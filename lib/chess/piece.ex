@@ -123,7 +123,12 @@ defmodule Chess.Piece do
   # TODO - validate position
 
   def set_position(%Piece{} = piece, position) do
-    %Piece{piece | position: position, moved: true, moves: [{piece.position, position}|piece.moves]}
+    %Piece{
+      piece
+      | position: position,
+        moved: true,
+        moves: [{piece.position, position} | piece.moves]
+    }
   end
 
   # TODO - validate color
