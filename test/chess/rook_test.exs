@@ -20,22 +20,22 @@ defmodule Chess.RookTest do
   end
 
   describe "possible_positions/3" do
-    test "no possible move", %{board: board, wq_rook: wq_rook} do
-      assert [] = Rook.possible_positions(board, "a1", wq_rook)
+    test "no possible move", %{board: board} do
+      assert [] = Rook.possible_positions(board, "a1")
     end
 
-    test "possible forward no kill", %{board: board, wq_rook: wq_rook, wqr_pawn: wqr_pawn} do
+    test "possible forward no kill", %{board: board, wqr_pawn: wqr_pawn} do
       board = Board.set_new_position(board, wqr_pawn, "a5")
 
-      assert [] = ["a2", "a3", "a4"] -- Rook.possible_positions(board, "a1", wq_rook)
+      assert [] = ["a2", "a3", "a4"] -- Rook.possible_positions(board, "a1")
     end
 
-    test "possible forward with kill", %{board: board, wq_rook: wq_rook, wqr_pawn: wqr_pawn} do
+    test "possible forward with kill", %{board: board, wqr_pawn: wqr_pawn} do
       board = Board.set_new_position(board, wqr_pawn, "b3")
 
       assert [] =
                ["a2", "a3", "a4", "a5", "a6", "a7"] --
-                 Rook.possible_positions(board, "a1", wq_rook)
+                 Rook.possible_positions(board, "a1")
     end
 
     test "all directions with kill and no kill", %{board: board, wq_rook: wq_rook} do
@@ -53,7 +53,7 @@ defmodule Chess.RookTest do
                  "e5",
                  "f5",
                  "h5"
-               ] -- Rook.possible_positions(board, "d5", wq_rook)
+               ] -- Rook.possible_positions(board, "d5")
     end
   end
 end

@@ -17,10 +17,9 @@ defmodule Chess.KingTest do
 
   describe "possible_positions/3" do
     test "no move", %{
-      board: board,
-      w_king: w_king
+      board: board
     } do
-      assert [] = King.possible_positions(board, "e1", w_king)
+      assert [] = King.possible_positions(board, "e1")
     end
 
     test "all directions with block", %{
@@ -29,7 +28,7 @@ defmodule Chess.KingTest do
     } do
       board = Board.set_new_position(board, w_king, "e3")
 
-      assert [] = ["d3", "f3", "d4", "e4", "f4"] -- King.possible_positions(board, "e3", w_king)
+      assert [] = ["d3", "f3", "d4", "e4", "f4"] -- King.possible_positions(board, "e3")
     end
 
     test "all directions with kill", %{
@@ -40,19 +39,18 @@ defmodule Chess.KingTest do
 
       assert [] =
                ["d5", "e5", "f5", "d6", "f6", "d7", "e7", "f7"] --
-                 King.possible_positions(board, "e6", w_king)
+                 King.possible_positions(board, "e6")
     end
 
     test "short castling", %{
       board: board,
-      b_king: b_king,
       bk_bishop: bk_bishop,
       bk_knight: bk_knight
     } do
       board = Board.set_new_position(board, bk_bishop, "a3")
       board = Board.set_new_position(board, bk_knight, "b3")
 
-      assert [] = ["f8", "g8"] -- King.possible_positions(board, "e8", b_king)
+      assert [] = ["f8", "g8"] -- King.possible_positions(board, "e8")
     end
 
     test "failed short castling", %{
@@ -67,7 +65,7 @@ defmodule Chess.KingTest do
         |> Board.set_new_position(bk_knight, "b3")
         # apenas para setar o status de moved da peça
         |> Board.set_new_position(b_king, "e8")
-        |> King.possible_positions("e8", b_king)
+        |> King.possible_positions("e8")
 
       assert [] = ["f8"] -- positions
     end

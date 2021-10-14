@@ -14,8 +14,8 @@ defmodule Chess.QueenTest do
   end
 
   describe "possible_positions/3" do
-    test "no possible move", %{board: board, w_queen: w_queen} do
-      assert [] = Queen.possible_positions(board, "d1", w_queen)
+    test "no possible move", %{board: board} do
+      assert [] = Queen.possible_positions(board, "d1")
     end
 
     test "all directions with kill and no kill", %{board: board, w_queen: w_queen} do
@@ -50,7 +50,7 @@ defmodule Chess.QueenTest do
                  # diagonal dl
                  "c4",
                  "b3"
-               ] -- Queen.possible_positions(board, "d5", w_queen)
+               ] -- Queen.possible_positions(board, "d5")
     end
   end
 end

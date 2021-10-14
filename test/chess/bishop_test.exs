@@ -13,8 +13,8 @@ defmodule Chess.BishopTest do
   end
 
   describe "possible_positions/3" do
-    test "no possible move", %{board: board, wq_bishop: wq_bishop} do
-      assert [] = Bishop.possible_positions(board, "a1", wq_bishop)
+    test "no possible move", %{board: board} do
+      assert [] = Bishop.possible_positions(board, "a1")
     end
 
     test "all directions with kill and no kill", %{board: board, wq_bishop: wq_bishop} do
@@ -36,7 +36,7 @@ defmodule Chess.BishopTest do
                  # diagonal dl
                  "c4",
                  "b3"
-               ] -- Bishop.possible_positions(board, "d5", wq_bishop)
+               ] -- Bishop.possible_positions(board, "d5")
 
       assert %Piece{color: :black} = Board.get_piece(board, "f7")
     end
