@@ -14,10 +14,10 @@ defmodule Chess.Game do
     }
   end
 
-  def set_board(%Game{} = game, %Board{} = board), do: %Game{game | board: board}
+  defp set_board(%Game{} = game, %Board{} = board), do: %Game{game | board: board}
 
-  def next_turn(%Game{turn: :white} = game), do: %Game{game | turn: :black}
-  def next_turn(%Game{turn: :black} = game), do: %Game{game | turn: :white}
+  defp next_turn(%Game{turn: :white} = game), do: %Game{game | turn: :black}
+  defp next_turn(%Game{turn: :black} = game), do: %Game{game | turn: :white}
 
   def move(%Game{} = game, from, to) do
     piece = Board.get_piece(game.board, from)
@@ -32,8 +32,8 @@ defmodule Chess.Game do
 
         game =
           if status == :ok do
-            Game.set_board(game, board)
-            |> Game.next_turn()
+            set_board(game, board)
+            |> next_turn()
           else
             game
           end

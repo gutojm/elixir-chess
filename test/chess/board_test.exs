@@ -87,7 +87,9 @@ defmodule Chess.BoardTest do
       assert [] = ["c4", "b3"] -- Board.possible_straight_positions(:down_left, board, "d5")
       assert [] = ["e4", "f3"] -- Board.possible_straight_positions(:down_right, board, "d5")
       assert [] = ["a5", "b5", "c5"] -- Board.possible_straight_positions(:left, board, "d5")
-      assert [] = ["e5", "f5", "g5", "h5"] -- Board.possible_straight_positions(:right, board, "d5")
+
+      assert [] =
+               ["e5", "f5", "g5", "h5"] -- Board.possible_straight_positions(:right, board, "d5")
     end
 
     test "all directions with limit", %{board: board, w_queen: w_queen} do
@@ -116,7 +118,9 @@ defmodule Chess.BoardTest do
       board = Board.set_new_position(board, bqb_pawn, "d6")
 
       assert [] = Board.possible_straight_positions(:up, board, "d5", 0, :forbidden)
-      assert [] = ["c6"] -- Board.possible_straight_positions(:up_left, board, "d5", 0, :forbidden)
+
+      assert [] =
+               ["c6"] -- Board.possible_straight_positions(:up_left, board, "d5", 0, :forbidden)
     end
   end
 
@@ -126,5 +130,63 @@ defmodule Chess.BoardTest do
       piece = Board.get_piece(board, "d5")
       assert %Piece{type: :queen, color: :white, position: "d5"} = piece
     end
+  end
+
+  defp move_and_test(board, from, to, move_count \\ 0) do
+    {status, board} = Board.move(board, from, to)
+    {status, board, Board.get_piece(board, to), move_count + 1}
+  end
+
+  test "move/3", %{board: board} do
+    assert {:not_allowed, board, %Piece{color: :white, class: :pawn}, _} =
+             move_and_test(board, "a1", "a2")
+
+    # white queen pawn
+    assert {:ok, board, %Piece{color: :white, class: :pawn}, move_count} =
+             move_and_test(board, "d2", "d4")
+
+    # black king pawn
+    assert {:ok, board, %Piece{color: :black, class: :pawn}, move_count} =
+             move_and_test(board, "e7", "e5", move_count)
+
+    # kill
+    assert {:ok, board, %Piece{color: :white, class: :pawn}, move_count} =
+             move_and_test(board, "d4", "e5", move_count)
+
+    # white queen bishop
+    assert {:ok, board, %Piece{color: :white, class: :bishop}, move_count} =
+             move_and_test(board, "c1", "h6", move_count)
+
+    # black king bishop
+    assert {:ok, board, %Piece{color: :black, class: :bishop}, move_count} =
+             move_and_test(board, "f8", "a3", move_count)
+
+    # white queen knight
+    assert {:ok, board, %Piece{color: :white, class: :knight}, move_count} =
+             move_and_test(board, "b1", "c3", move_count)
+
+    # black king knight
+    assert {:ok, board, %Piece{color: :black, class: :knight}, move_count} =
+             move_and_test(board, "g8", "f6", move_count)
+
+    # white queen
+    assert {:ok, board, %Piece{color: :white, class: :queen}, move_count} =
+             move_and_test(board, "d1", "d2", move_count)
+
+    # white king - long castling
+    assert {:ok, board, %Piece{color: :white, class: :king}, move_count} =
+             move_and_test(board, "e1", "c1", move_count)
+
+    # check if rook also moved
+    assert %Piece{color: :white, class: :rook} = Board.get_piece(board, "d1")
+    # black king - short castling
+    assert {:ok, board, %Piece{color: :black, class: :king}, move_count} =
+             move_and_test(board, "e8", "g8", move_count)
+
+    # check if rook also moved
+    assert %Piece{color: :black, class: :rook} = Board.get_piece(board, "f8")
+
+    assert move_count == length(board.moves)
+    assert 1 == length(board.black_captured)
   end
 end
