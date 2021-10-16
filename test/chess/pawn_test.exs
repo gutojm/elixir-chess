@@ -56,4 +56,19 @@ defmodule Chess.PawnTest do
       assert [] = ["c6", "d6"] -- Pawn.possible_positions(board, "c5")
     end
   end
+
+  describe "en_passant_kill_position/3" do
+    test "success", %{board: board, wqb_pawn: wqb_pawn} do
+      board = Board.set_new_position(board, wqb_pawn, "c5")
+      {_, board} = Board.move(board, "d7", "d5")
+      assert "d5" = Pawn.en_passant_kill_position(board, Board.get_piece(board, "c5"), "d6")
+    end
+
+    test "failed", %{board: board, wqb_pawn: wqb_pawn} do
+      board = Board.set_new_position(board, wqb_pawn, "c5")
+      {_, board} = Board.move(board, "d7", "d6")
+      {_, board} = Board.move(board, "d6", "d5")
+      assert nil == Pawn.en_passant_kill_position(board, Board.get_piece(board, "c5"), "d6")
+    end
+  end
 end
