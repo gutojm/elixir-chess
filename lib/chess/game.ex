@@ -19,6 +19,10 @@ defmodule Chess.Game do
   defp next_turn(%Game{turn: :white} = game), do: %Game{game | turn: :black}
   defp next_turn(%Game{turn: :black} = game), do: %Game{game | turn: :white}
 
+  def check(board, color) do
+    length(Board.menacing_king_pieces(board, color)) > 0
+  end
+
   def move(%Game{} = game, from, to) do
     piece = Board.get_piece(game.board, from)
 

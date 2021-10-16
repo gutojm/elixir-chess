@@ -11,7 +11,8 @@ defmodule Chess.BoardTest do
       board: board,
       wqb_pawn: Board.get_piece(board, "c2"),
       w_queen: Board.get_piece(board, "d1"),
-      bqb_pawn: Board.get_piece(board, "c7")
+      bqb_pawn: Board.get_piece(board, "c7"),
+      w_king: Board.get_piece(board, "e1")
     }
   end
 
@@ -188,5 +189,27 @@ defmodule Chess.BoardTest do
 
     assert move_count == length(board.moves)
     assert 1 == length(board.black_captured)
+  end
+
+  describe "menacing_king_pieces/2" do
+    test "no menaces", %{board: board} do
+      assert [] = Board.menacing_king_pieces(board, :white)
+    end
+
+    test "menaces", %{board: board, w_king: w_king} do
+      board = Board.set_new_position(board, w_king, "e6")
+      assert 2 = length(Board.menacing_king_pieces(board, :white))
+    end
+  end
+
+  describe "menacing_king_positions/2" do
+    test "no menaces", %{board: board} do
+      assert [] = Board.menacing_king_positions(board, :white)
+    end
+
+    test "menaces", %{board: board, w_king: w_king} do
+      board = Board.set_new_position(board, w_king, "e6")
+      assert [] = ["d7", "f7"] -- Board.menacing_king_positions(board, :white)
+    end
   end
 end

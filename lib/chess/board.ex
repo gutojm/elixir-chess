@@ -373,4 +373,23 @@ defmodule Chess.Board do
       {:not_allowed, board}
     end
   end
+
+  defp check_menaces(nil, _), do: []
+
+  defp check_menaces(%Piece{color: color, position: position}, %Board{pieces: pieces} = board) do
+    Enum.filter(
+      pieces,
+      &(&1.color != color and position in possible_positions(board, &1.position))
+    )
+  end
+
+  def menacing_king_pieces(%Board{} = board, color) do
+    Enum.find(board.pieces, &(&1.class == :king and &1.color == color))
+    |> check_menaces(board)
+  end
+
+  def menacing_king_positions(%Board{} = board, color) do
+    menacing_king_pieces(board, color)
+    |> Enum.map(& &1.position)
+  end
 end

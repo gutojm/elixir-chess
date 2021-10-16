@@ -8,13 +8,16 @@ defmodule Chess.TUI do
   end
 
   def play_loop(game, _last_message, :end_game), do: game
-  def play_loop(game, last_message, _status) do
 
+  def play_loop(game, last_message, _status) do
     print_board(game.board)
 
     IO.puts("\n #{last_message} \n")
 
-    command = IO.gets("#{game.turn}: command ('h' for help): ") |> String.replace_trailing("\n", "")
+    print_menaces(game.board)
+
+    command =
+      IO.gets("#{game.turn}: command ('h' for help): ") |> String.replace_trailing("\n", "")
 
     status = get_status_from_command(game, command)
 
@@ -25,6 +28,18 @@ defmodule Chess.TUI do
     play_loop(game, "#{status}: #{status} #{to}", status)
   end
 
+  defp print_menaces_by_color(_, []), do: nil
+
+  defp print_menaces_by_color(:white, menacing_positions),
+    do: IO.puts("white checked: #{menacing_positions}")
+
+  defp print_menaces_by_color(:black, menacing_positions),
+    do: IO.puts("black checked: #{menacing_positions}")
+
+  defp print_menaces(%Board{} = board) do
+    print_menaces_by_color(:white, Board.menacing_king_positions(board, :white))
+    print_menaces_by_color(:black, Board.menacing_king_positions(board, :black))
+  end
 
   def print_board(%Board{} = board, pos_highlight \\ "") do
     marks = get_marks(board, pos_highlight)
@@ -57,6 +72,7 @@ defmodule Chess.TUI do
   end
 
   defp get_marks(_, ""), do: []
+
   defp get_marks(board, pos_highlight) do
     Board.possible_positions(board, pos_highlight)
   end
@@ -74,9 +90,10 @@ defmodule Chess.TUI do
     end)
   end
 
-  defp build_square(nil = _piece, true = _position_in_marks), do: "<>"
-  defp build_square(_piece, true = _position_in_marks), do: "><"
+  defp build_square(nil = _piece, true = _position_in_marks), do: "< >"
+  defp build_square(_piece, true = _position_in_marks), do: "> <"
   defp build_square(nil = _piece, false = _position_in_marks), do: "[ ]"
+
   defp build_square(piece, false = _position_in_marks) do
     Piece.get_color(piece.color) <> Piece.get_name(piece.class) <> Piece.get_color(piece.color)
   end
